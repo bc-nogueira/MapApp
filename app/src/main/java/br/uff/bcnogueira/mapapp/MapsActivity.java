@@ -9,10 +9,16 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+import br.uff.bcnogueira.mapapp.directionHelpers.FetchUrl;
+import br.uff.bcnogueira.mapapp.directionHelpers.TaskLoadedCallback;
 
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, TaskLoadedCallback {
     private GoogleMap mMap;
+    MarkerOptions origem, destino;
+    Polyline currentPolyline;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,25 +28,38 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+        origem = new MarkerOptions().position(new LatLng(2.8235, -60.6758)).title("Roraima");
+        destino = new MarkerOptions().position(new LatLng(-30.0277, -51.2287)).title("Porto Alegre");
+
+        String url = getUrl(origem.getPosition(), destino.getPosition(), "driving");
+        new FetchUrl(MapsActivity.this).execute(url, "driving");
     }
 
-
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        // Add a marker in IC UFF and move the camera
-        LatLng icUff = new LatLng(-22.906187, -43.132947);
-        mMap.addMarker(new MarkerOptions().position(icUff).title("Marker in IC UFF"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(icUff, 15.0f));
+        mMap.addMarker(origem);
+        mMap.addMarker(destino);
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(origem.getPosition(), 15.0f));
+    }
+
+    private String getUrl(LatLng origem, LatLng destino, String directionMode) {
+        String str_origem = "origin=" + origem.latitude + "," + origem.longitude;
+        String str_destino = "destination=" + destino.latitude + "," + destino.longitude;
+        String mode = "mode=" + directionMode;
+        String parameters = str_origem + "&" + str_destino + "&" + mode;
+        String output = "json";
+        String url = "https://maps.googleapis.com/maps/api/directions/" + output + "?" + parameters
+                + "&key=" + getString(R.string.google_maps_key);
+        return url;
+    }
+
+    @Override
+    public void onTaskDone(Object... values) {
+        if(currentPolyline != null)
+            currentPolyline.remove();
+        currentPolyline = mMap.addPolyline((PolylineOptions) values[0]);
     }
 }
