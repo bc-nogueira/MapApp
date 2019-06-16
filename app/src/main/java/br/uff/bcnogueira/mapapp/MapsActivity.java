@@ -2,6 +2,7 @@ package br.uff.bcnogueira.mapapp;
 
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -19,9 +20,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleMap mMap;
     MarkerOptions origem, destino;
     Polyline currentPolyline;
+    long begin;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        begin = System.nanoTime();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -42,7 +45,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         mMap.addMarker(origem);
         mMap.addMarker(destino);
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(origem.getPosition(), 15.0f));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(origem.getPosition(), 4.2f));
     }
 
     private String getUrl(LatLng origem, LatLng destino, String directionMode) {
@@ -61,5 +64,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if(currentPolyline != null)
             currentPolyline.remove();
         currentPolyline = mMap.addPolyline((PolylineOptions) values[0]);
+
+        long difference = (System.nanoTime() - begin)/1000000;
+        String message = "Finished in " + difference + "ms";
+        Integer duration = Toast.LENGTH_SHORT;
+        Toast toast = Toast.makeText(this, message, duration);
+        toast.show();
     }
 }
